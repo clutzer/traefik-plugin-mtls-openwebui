@@ -44,13 +44,14 @@ traefik-plugin-mtls-open-webui/
 
 ## Local Plugin Registration (Traefik v3.1+)
 
-Register the plugin in Traefik's **static** config:
+Register the plugin in Traefik's **static** config using the `--experimental.localplugins` namespace:
 
 ```yaml
 # traefik.yml (static)
-localPlugins:
-  cert-parser:
-    moduleName: github.com/clutzer/traefik-plugin-mtls-open-webui
+experimental:
+  localPlugins:
+    cert-parser:
+      moduleName: github.com/clutzer/traefik-plugin-mtls-open-webui
 ```
 
 Or via CLI flag in `docker-compose.yml`:
@@ -59,10 +60,10 @@ Or via CLI flag in `docker-compose.yml`:
 services:
   traefik:
     command:
-      - "--localPlugins.cert-parser.modulename=github.com/clutzer/traefik-plugin-mtls-open-webui"
+      - "--experimental.localplugins.cert-parser.modulename=github.com/clutzer/traefik-plugin-mtls-open-webui"
 ```
 
-> ⚠️ Do **not** use `--experimental.localplugins`. That is Traefik v2 syntax and will not work with v3.1.
+> **Note:** Traefik v3.x local plugins use the `--experimental.localplugins` prefix. This is the current and correct registration method for local plugins in Traefik.
 
 ## Traefik Dynamic Configuration
 

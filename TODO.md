@@ -2,10 +2,10 @@
 
 ## Critical — Plugin will not function
 
-- [ ] **Fix Traefik v3.1 local plugin flag syntax**
-  - `docker-compose.yml` currently uses `--experimental.localplugins...`
-  - Must be changed to `--localPlugins.cert-parser.modulename=...`
-  - Also update `IMPLEMENTATION_PLAN.md` if it is kept elsewhere
+- [x] ~~**Fix Traefik v3.1 local plugin flag syntax**~~
+  - `docker-compose.yml` already uses `--experimental.localplugins...` which is the **correct** Traefik v3.x syntax for local plugins.
+  - The `--experimental` prefix is required — there is no non-experimental `--localPlugins` CLI flag.
+  - ✅ No change needed.
 
 - [ ] **Add mTLS `clientAuth` TLS options**
   - `dynamic-config.yml` references `tls: options: default`

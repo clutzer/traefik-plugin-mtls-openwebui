@@ -74,8 +74,6 @@ Append the local plugin registration flag to Traefik's startup command:
       --experimental.localplugins.cert-parser.modulename=github.com/clutzer/traefik-plugin-mtls-open-webui
 ```
 
-> **Important:** Traefik v3.7.1 uses `--experimental.localplugins.*`, not `--localPlugins.*`. The plugin README refers to the latter, but the stable CLI flag in current releases is still under the `experimental` namespace.
-
 Verify the plugin loads by checking Traefik logs for:
 ```
 Loading plugins... plugins=["cert-parser"]
@@ -178,6 +176,8 @@ The template provides:
    ```
    --experimental.localplugins.cert-parser.modulename=github.com/clutzer/traefik-plugin-mtls-open-webui
    ```
+
+   This is Traefik v3.x's approach for [local plugins](https://doc.traefik.io/traefik/plugins/); the `--experimental` prefix is required.
 
 4. **Dynamic middleware definition** in `traefik/dynamic.yml`:
    ```yaml
