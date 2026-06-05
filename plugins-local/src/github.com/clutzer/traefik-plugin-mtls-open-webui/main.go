@@ -1,4 +1,4 @@
-package main
+package traefik_plugin_mtls_open_webui
 
 import (
 	"context"
@@ -43,42 +43,100 @@ func (a *CertParser) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// 3. Traefik URL-encodes this header natively. Decode it.
 	decodedHeader, err := url.QueryUnescape(rawHeader)
-	if err == nil {
-		// Example format: Subject="CN=john.doe@example.com,OU=Engineering"
-		if strings.Contains(decodedHeader, "CN=") {
-			cnValue := extractCN(decodedHeader)
-			
-			if cnValue != "" {
-				if strings.Contains(cnValue, "@") {
-					// Format is an email address
-					req.Header.Set("X-User-Email", cnValue)
-					username := strings.Split(cnValue, "@")[0]
-					req.Header.Set("X-User-Name", username)
-				} else {
-					// Fallback if CN is just a plain username string
-					req.Header.Set("X-User-Name", cnValue)
-				}
-			}
+	if err != nil {
+		a.next.ServeHTTP(rw, req)
+		return
+	}
+
+	// 4. Extract CN from Subject, then fall back to SAN for email
+	cnValue := extractSubjectCN(decodedHeader)
+	if cnValue != "" {
+		if strings.Contains(cnValue, "@") {
+			// Format is an email address
+			req.Header.Set("X-User-Email", cnValue)
+			username := strings.Split(cnValue, "@")[0]
+			req.Header.Set("X-User-Name", username)
+		} else {
+			// Fallback if CN is just a plain username string
+			req.Header.Set("X-User-Name", cnValue)
 		}
 	}
 
-	// 4. Pass control safely to the next middleware or backend service
+	// If CN didn't provide an email, try SAN
+	if req.Header.Get("X-User-Email") == "" {
+		sanEmails := extractSANEmails(decodedHeader)
+		for _, email := range sanEmails {
+			req.Header.Set("X-User-Email", email)
+			if req.Header.Get("X-User-Name") == "" {
+				username := strings.Split(email, "@")[0]
+				req.Header.Set("X-User-Name", username)
+			}
+			break // Use first email SAN found
+		}
+	}
+
+	// 5. Pass control safely to the next middleware or backend service
 	a.next.ServeHTTP(rw, req)
 }
 
-// Helper logic to cleanly extract the CN value from the complex Subject string
-func extractCN(header string) string {
-	start := strings.Index(header, "CN=")
+// extractSubjectCN isolates the Subject="..." field, then extracts CN from it.
+// This prevents accidentally matching the Issuer's CN.
+func extractSubjectCN(header string) string {
+	subjectPrefix := `Subject="`
+	start := strings.Index(header, subjectPrefix)
+	if start == -1 {
+		return ""
+	}
+	start += len(subjectPrefix)
+	end := strings.Index(header[start:], `"`)
+	if end == -1 {
+		return ""
+	}
+	subject := header[start : start+end]
+	return extractCN(subject)
+}
+
+// extractCN extracts the CN value from a string containing CN=...
+func extractCN(s string) string {
+	start := strings.Index(s, "CN=")
 	if start == -1 {
 		return ""
 	}
 	start += 3 // Advance past the string length of "CN="
 
-	remaining := header[start:]
-	// The CN field ends at a comma separator or a trailing closing quote character
-	end := strings.IndexAny(remaining, `,"`)
+	remaining := s[start:]
+	// The CN field ends at a comma separator or a trailing quote character
+	end := strings.IndexAny(remaining, `, "`)
 	if end == -1 {
 		return remaining
 	}
 	return remaining[:end]
+}
+
+// extractSANEmails pulls email-looking values from the SAN field.
+func extractSANEmails(header string) []string {
+	prefix := `SAN="`
+	start := strings.Index(header, prefix)
+	if start == -1 {
+		return nil
+	}
+	start += len(prefix)
+	end := strings.Index(header[start:], `"`)
+	if end == -1 {
+		return nil
+	}
+	sanValue := header[start : start+end]
+
+	var emails []string
+	for _, san := range strings.Split(sanValue, ",") {
+		san = strings.TrimSpace(san)
+		// Strip known SAN type prefixes if Traefik includes them
+		san = strings.TrimPrefix(san, "email:")
+		san = strings.TrimPrefix(san, "rfc822Name:")
+		san = strings.TrimSpace(san)
+		if strings.Contains(san, "@") {
+			emails = append(emails, san)
+		}
+	}
+	return emails
 }
