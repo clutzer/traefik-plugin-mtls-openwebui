@@ -1,4 +1,4 @@
-# Implementation Plan: `traefik-plugin-mtls-openwebui`
+# Implementation Plan: `traefik-plugin-mtls-open-webui`
 
 ## 1. Project Overview
 The objective is to build a Traefik middleware plugin written in Go that acts as a bridge between Mutual TLS (mTLS) client certificate authentication and Open WebUI's trusted header authentication. 
@@ -15,7 +15,7 @@ The plugin will run inside an unmodified, stock Traefik Docker container utilizi
 The Agent must construct the following file tree layout on the host machine. This structure mimics standard Go packaging required by Traefik's local plugin loader engine.
 
 ```text
-traefik-plugin-mtls-openwebui/
+traefik-plugin-mtls-open-webui/
 ├── IMPLEMENTATION_PLAN.md  (This file)
 ├── dynamic-config.yml       # Traefik dynamic routing configuration
 ├── docker-compose.yml       # Local integration testing environment
@@ -23,7 +23,7 @@ traefik-plugin-mtls-openwebui/
     └── src/
         └── [github.com/](https://github.com/)
             └── clutzer/
-                └── traefik-plugin-mtls-openwebui/
+                └── traefik-plugin-mtls-open-webui/
                     ├── .traefik.yml   # Traefik Plugin Manifest
                     ├── go.mod         # Go module definition
                     └── main.go        # Plugin source code
@@ -32,13 +32,13 @@ traefik-plugin-mtls-openwebui/
 ## 3. Step-by-Step Execution Phases
 
 ### Phase 1: Initialize the Go Module & Manifest
-Navigate to the directory plugins-local/src/github.com/clutzer/traefik-plugin-mtls-openwebui/ and create the core configuration files.
+Navigate to the directory plugins-local/src/github.com/clutzer/traefik-plugin-mtls-open-webui/ and create the core configuration files.
 
 #### Task 1.1: Create go.mod
 Initialize the module precisely matching the local import path layout.
 
 ```
-module github.com/clutzer/traefik-plugin-mtls-openwebui
+module github.com/clutzer/traefik-plugin-mtls-open-webui
 
 go 1.21
 ```
@@ -50,7 +50,7 @@ This manifest defines metadata and provides mock configuration settings for Trae
 ```
 displayName: "mTLS to Open WebUI Header Parser"
 type: "middleware"
-import: "github.com/clutzer/traefik-plugin-mtls-openwebui"
+import: "github.com/clutzer/traefik-plugin-mtls-open-webui"
 summary: "Decodes Traefik mTLS certificate info into X-User-Name and X-User-Email headers for Open WebUI."
 
 testData: {}
