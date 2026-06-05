@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v3.1
+    container_name: traefik-mtls-dev
+    ports:
+      - "443:443"
+      - "8080:8080" # Traefik Web UI Dashboard
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:443"
+      # Enable File Provider for custom dynamic configurations
+      - "--providers.file.filename=/dynamic-config.yml"
+      - "--providers.file.watch=true"
+      # Register our Local Plugin statically inside Traefik
+      - "--experimental.localplugins.cert-parser.modulename=github.com/clutzer/traefik-plugin-mtls-open-webui"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dynamic-config.yml:/dynamic-config.yml:ro
+      # Crucial: Local code mounting directly to container runtime space
+      - ./plugins-local:/plugins-local:ro

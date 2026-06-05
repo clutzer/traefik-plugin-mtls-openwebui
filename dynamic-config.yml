@@ -1,0 +1,31 @@
+http:
+  routers:
+    open-webui-route:
+      rule: "Host(`localhost`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - native-cert-extractor
+        - execute-custom-parser-plugin
+      service: open-webui-mock-service
+      tls:
+        options: default
+
+  middlewares:
+    # Step 1: Tell Traefik to look at client handshake data and put it into headers
+    native-cert-extractor:
+      passTLSClientCert:
+        info:
+          subject:
+            commonName: true
+
+    # Step 2: Pass control to our custom compiled code block
+    execute-custom-parser-plugin:
+      plugin:
+        cert-parser: {} # Activates local plugin matching static declaration
+
+  services:
+    open-webui-mock-service:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8080" # Replace with actual Open WebUI container address later
